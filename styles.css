@@ -1023,30 +1023,50 @@ section {
     align-items: center;
 }
 
-.about-profile-img {
-    width: 360px;
-    height: 360px;
-    object-fit: contain;
-    object-position: center 48%;
+.about-profile-circle {
+    width: 240px;
+    height: 320px;
     border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     position: relative;
     transition: all 0.3s ease;
-    box-shadow: 
+    box-shadow:
         0 0 24px rgba(196, 123, 228, 0.35),
         0 0 48px rgba(196, 123, 228, 0.25),
         0 0 70px rgba(196, 123, 228, 0.18),
         inset 0 0 24px rgba(255, 255, 255, 0.08);
+}
+
+.about-profile-circle:hover {
+    transform: scale(1.05);
+    box-shadow:
+        0 0 32px rgba(196, 123, 228, 0.45),
+        0 0 70px rgba(196, 123, 228, 0.35),
+        0 0 110px rgba(196, 123, 228, 0.25),
+        inset 0 0 32px rgba(255, 255, 255, 0.12);
+}
+
+.about-profile-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+    border-radius: 0;
+    position: static;
+    transition: none;
+    box-shadow: none;
     filter: none;
     background-color: transparent;
 }
 
 .about-profile-img:hover {
-    transform: scale(1.05);
-    box-shadow: 
-        0 0 32px rgba(196, 123, 228, 0.45),
-        0 0 70px rgba(196, 123, 228, 0.35),
-        0 0 110px rgba(196, 123, 228, 0.25),
-        inset 0 0 32px rgba(255, 255, 255, 0.12);
+    transform: none;
+    box-shadow: none;
     filter: none;
 }
 
@@ -1542,6 +1562,95 @@ section {
     transform: translateY(-1px);
 }
 
+/* Certificate Modal */
+.cert-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.cert-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.cert-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(6px);
+}
+
+.cert-modal-content {
+    position: relative;
+    z-index: 1;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.cert-modal.show .cert-modal-content {
+    transform: scale(1);
+}
+
+.cert-modal-image {
+    max-width: 100%;
+    max-height: 85vh;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    object-fit: contain;
+}
+
+.cert-modal-close {
+    position: absolute;
+    top: -44px;
+    right: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.cert-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+@media (max-width: 480px) {
+    .cert-modal {
+        padding: 1rem;
+    }
+
+    .cert-modal-close {
+        top: -40px;
+        right: 0;
+    }
+
+    .cert-modal-image {
+        max-height: 80vh;
+        border-radius: 8px;
+    }
+}
+
 /* Certificate Notification */
 .cert-notification {
     position: fixed;
@@ -1773,21 +1882,23 @@ section {
 .project-image {
     position: relative;
     height: 260px;
-    background: transparent;
+    background: linear-gradient(135deg, #1a1327 0%, #241a35 100%);
     overflow: hidden;
     z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 12px;
 }
 
 .project-img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     object-position: center;
     transition: transform 0.5s ease;
     display: block;
+    margin: 0 auto;
     position: relative;
     z-index: 2;
 }
@@ -2038,6 +2149,62 @@ section {
     gap: 1.5rem;
 }
 
+.form-honey {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Honeypot spam trap — must stay invisible to real users */
+.form-honey {
+    display: none !important;
+}
+
+.form-status {
+    display: none;
+    padding: 0.875rem 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    animation: fadeInUp 0.3s ease;
+}
+
+.form-status.show {
+    display: block;
+}
+
+.form-status.success {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #6ee7b7;
+}
+
+.form-status.error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+}
+
+.form-status.loading {
+    background: rgba(196, 123, 228, 0.12);
+    border: 1px solid rgba(196, 123, 228, 0.35);
+    color: var(--text-primary);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .form-group {
     position: relative;
 }
@@ -2078,6 +2245,133 @@ section {
 .contact-form .btn {
     width: 100%;
     justify-content: center;
+}
+
+/* ===== Contact Success/Error Popup ===== */
+.contact-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.contact-popup.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.contact-popup-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 6, 18, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.contact-popup-card {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 2.25rem 1.75rem 1.75rem;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    transform: translateY(16px) scale(0.96);
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.contact-popup.show .contact-popup-card {
+    transform: translateY(0) scale(1);
+}
+
+.contact-popup-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary, #b8b0c8);
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.contact-popup-close:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+.contact-popup-icon {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 1.1rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.9rem;
+    color: #fff;
+}
+
+.contact-popup.success .contact-popup-icon {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.14);
+}
+
+.contact-popup.error .contact-popup-icon {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.14);
+}
+
+.contact-popup-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0 0 0.6rem;
+    color: var(--text-primary, #fff);
+}
+
+.contact-popup-text {
+    font-size: 0.98rem;
+    line-height: 1.6;
+    color: var(--text-secondary, #b8b0c8);
+    margin: 0 0 1.5rem;
+}
+
+.contact-popup-ok {
+    width: auto;
+    min-width: 140px;
+    margin: 0 auto;
+}
+
+@media (max-width: 480px) {
+    .contact-popup-card {
+        padding: 2rem 1.25rem 1.5rem;
+        border-radius: 16px;
+    }
+
+    .contact-popup-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.6rem;
+    }
+
+    .contact-popup-title {
+        font-size: 1.2rem;
+    }
 }
 
 /* ===== Footer ===== */
@@ -2177,13 +2471,13 @@ section {
         height: 250px;
         min-height: 250px;
         max-height: 250px;
-        padding: 0;
-        background: transparent;
+        padding: 10px;
+        background: linear-gradient(135deg, #1a1327 0%, #241a35 100%);
         overflow: hidden;
     }
 
     .project-img {
-        object-fit: cover;
+        object-fit: contain;
         object-position: center;
         width: 100%;
         height: 100%;
@@ -2417,13 +2711,13 @@ section {
         height: 220px;
         min-height: 220px;
         max-height: 220px;
-        padding: 0;
-        background: transparent;
+        padding: 10px;
+        background: linear-gradient(135deg, #1a1327 0%, #241a35 100%);
         overflow: hidden;
     }
 
     .project-img {
-        object-fit: cover;
+        object-fit: contain;
         object-position: center;
         width: 100%;
         height: 100%;
@@ -2497,9 +2791,16 @@ section {
         width: 100%;
     }
 
+    .about-profile-circle {
+        width: 240px;
+        height: 320px;
+    }
+
     .about-profile-img {
-        width: 280px;
-        height: 280px;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center center;
     }
 
     .image-wrapper {
@@ -2541,13 +2842,13 @@ section {
         height: 200px;
         min-height: 200px;
         max-height: 200px;
-        padding: 0;
-        background: transparent;
+        padding: 10px;
+        background: linear-gradient(135deg, #1a1327 0%, #241a35 100%);
         overflow: hidden;
     }
 
     .project-img {
-        object-fit: cover;
+        object-fit: contain;
         border-radius: 0;
     }
 
@@ -2669,13 +2970,13 @@ section {
         height: 240px;
         min-height: 240px;
         max-height: 240px;
-        padding: 0;
-        background: transparent;
+        padding: 10px;
+        background: linear-gradient(135deg, #1a1327 0%, #241a35 100%);
         overflow: hidden;
     }
 
     .project-img {
-        object-fit: cover;
+        object-fit: contain;
         object-position: center;
         width: 100%;
         height: 100%;

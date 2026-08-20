@@ -134,58 +134,139 @@ if (typingElement) {
 
 // Contact Form Handling with FormSubmit
 const contactForm = document.getElementById('contactForm');
+const formStatus = document.getElementById('formStatus');
+
+// --- Contact popup (on-screen confirmation shown to whoever submits) ---
+const contactPopup = document.getElementById('contactPopup');
+
+function showContactPopup(type, title, text) {
+    if (!contactPopup) return;
+    const icon = document.getElementById('contactPopupIcon');
+    const titleEl = document.getElementById('contactPopupTitle');
+    const textEl = document.getElementById('contactPopupText');
+
+    contactPopup.classList.remove('success', 'error');
+    contactPopup.classList.add(type);
+    if (icon) {
+        icon.innerHTML = type === 'success'
+            ? '<i class="fas fa-check"></i>'
+            : '<i class="fas fa-triangle-exclamation"></i>';
+    }
+    if (titleEl) titleEl.textContent = title;
+    if (textEl) textEl.textContent = text;
+
+    contactPopup.classList.add('show');
+    contactPopup.setAttribute('aria-hidden', 'false');
+}
+
+function hideContactPopup() {
+    if (!contactPopup) return;
+    contactPopup.classList.remove('show');
+    contactPopup.setAttribute('aria-hidden', 'true');
+}
+
+if (contactPopup) {
+    contactPopup.querySelectorAll('[data-close-popup]').forEach(el => {
+        el.addEventListener('click', hideContactPopup);
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hideContactPopup();
+    });
+}
+
+function showFormStatus(message, type) {
+    if (!formStatus) return;
+    formStatus.textContent = message;
+    formStatus.className = `form-status show ${type}`;
+}
+
+function hideFormStatus() {
+    if (!formStatus) return;
+    formStatus.className = 'form-status';
+    formStatus.textContent = '';
+}
 
 if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
+    const emailInput = contactForm.querySelector('#email');
+    const replyToField = contactForm.querySelector('#replyto');
+
+    contactForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
         const submitButton = contactForm.querySelector('button[type="submit"]');
         const originalText = submitButton.innerHTML;
-        
-        // Show loading state
+
+        if (!contactForm.checkValidity()) {
+            contactForm.reportValidity();
+            return;
+        }
+
+        if (replyToField && emailInput) {
+            replyToField.value = emailInput.value.trim();
+        }
+
+        // Capture the sender's name now, before the form is reset.
+        const senderName = (contactForm.querySelector('#name')?.value || '').trim();
+        const firstName = senderName.split(' ')[0] || 'there';
+
         submitButton.disabled = true;
         submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-        
-        // FormSubmit will handle the submission automatically
-        // After successful submission, it will redirect back to #contact
-        // We'll show success message when page loads with success parameter
-        
-        // Check if URL has success parameter (FormSubmit adds this)
-        setTimeout(() => {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('success') === 'true') {
+        showFormStatus('Sending your message...', 'loading');
+
+        const endpoint = contactForm.getAttribute('action');
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { Accept: 'application/json' },
+                body: new FormData(contactForm),
+            });
+
+            let data = {};
+            try {
+                data = await response.json();
+            } catch {
+                data = {};
+            }
+
+            const isSuccess = response.ok && data.success !== 'false' && data.success !== false;
+
+            if (isSuccess) {
+                showFormStatus('Message sent successfully! I\'ll get back to you soon.', 'success');
+                showContactPopup(
+                    'success',
+                    'Message Sent! 🎉',
+                    `Thank you, ${firstName}! Your message has been delivered. I'll get back to you at the email you provided very soon.`
+                );
                 submitButton.innerHTML = '<i class="fas fa-check"></i> Message Sent!';
                 submitButton.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
                 contactForm.reset();
-                
-                // Reset button after 3 seconds
-                setTimeout(() => {
-                    submitButton.innerHTML = originalText;
-                    submitButton.style.background = '';
-                    submitButton.disabled = false;
-                    // Clean URL
-                    window.history.replaceState({}, document.title, window.location.pathname + '#contact');
-                }, 3000);
             } else {
-                // If no success, keep loading (form is submitting)
-                // FormSubmit will redirect back with success parameter
+                throw new Error(data.message || 'Unable to send message. Please try again.');
             }
-        }, 100);
-    });
-    
-    // Check for success message on page load
-    window.addEventListener('load', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('success') === 'true') {
-            const submitButton = contactForm.querySelector('button[type="submit"]');
-            submitButton.innerHTML = '<i class="fas fa-check"></i> Message Sent!';
-            submitButton.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-            contactForm.reset();
-            
+        } catch (err) {
+            const errText = err.message === 'Failed to fetch'
+                ? 'Network error. Check your connection and try again, or email me directly at bhartithapa6538@gmail.com.'
+                : `${err.message} You can also reach me at bhartithapa6538@gmail.com.`;
+            showFormStatus(errText, 'error');
+            showContactPopup('error', 'Message Not Sent', errText);
+            submitButton.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Try Again';
+            submitButton.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+        } finally {
             setTimeout(() => {
-                submitButton.innerHTML = '<span>Send Message</span><i class="fas fa-paper-plane"></i>';
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
                 submitButton.style.background = '';
-                window.history.replaceState({}, document.title, window.location.pathname + '#contact');
-            }, 3000);
+            }, 4000);
         }
+    });
+
+    contactForm.querySelectorAll('input, textarea').forEach(field => {
+        field.addEventListener('input', () => {
+            if (formStatus?.classList.contains('error')) {
+                hideFormStatus();
+            }
+        });
     });
 }
 
@@ -268,70 +349,47 @@ navLinks.forEach(link => {
     });
 });
 
-// Certificate Link Handler
+// Certificate Modal Handler
 document.addEventListener('DOMContentLoaded', () => {
-    const certLinks = document.querySelectorAll('.cert-link');
-    
+    const certModal = document.getElementById('certModal');
+    const certModalImage = document.getElementById('certModalImage');
+    const certLinks = document.querySelectorAll('.cert-link[data-cert]');
+    const closeBtn = certModal?.querySelector('.cert-modal-close');
+    const backdrop = certModal?.querySelector('.cert-modal-backdrop');
+
+    function openCertModal(imageSrc) {
+        if (!certModal || !certModalImage) return;
+        certModalImage.src = imageSrc;
+        certModal.classList.add('show');
+        certModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCertModal() {
+        if (!certModal || !certModalImage) return;
+        certModal.classList.remove('show');
+        certModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        certModalImage.src = '';
+    }
+
     certLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            showCertificateMessage();
+            const certSrc = link.getAttribute('data-cert');
+            if (certSrc) openCertModal(certSrc);
         });
     });
-});
 
-// Show Certificate Message
-function showCertificateMessage() {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = 'cert-notification';
-    notification.innerHTML = `
-        <div class="cert-notification-content">
-            <div class="cert-notification-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="cert-notification-text">
-                <h3>Course Successfully Completed</h3>
-                <p>Certificate under process</p>
-            </div>
-            <button class="cert-notification-close" aria-label="Close">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-    
-    // Add to body
-    document.body.appendChild(notification);
-    
-    // Trigger animation
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 10);
-    
-    // Close button functionality
-    const closeBtn = notification.querySelector('.cert-notification-close');
-    closeBtn.addEventListener('click', () => {
-        closeNotification(notification);
+    closeBtn?.addEventListener('click', closeCertModal);
+    backdrop?.addEventListener('click', closeCertModal);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && certModal?.classList.contains('show')) {
+            closeCertModal();
+        }
     });
-    
-    // Auto close after 5 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            closeNotification(notification);
-        }
-    }, 5000);
-}
-
-// Close notification function
-function closeNotification(notification) {
-    notification.classList.remove('show');
-    notification.classList.add('hide');
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-        }
-    }, 300);
-}
+});
 
 // Initialize on page load
 window.addEventListener('load', () => {
